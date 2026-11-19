@@ -48,7 +48,7 @@ private_start_app() {
   # 校验环境变量
   private_check_env "GPU_POWER_LIMIT" "$gpu_power_limit"
   # 判断显卡数量
-  [[ -z "$gpu_ids" ]] || private_throw_error "没有检测到 NVIDIA 显卡！"
+  [[ -n "$gpu_ids" ]] || private_throw_error "没有检测到 NVIDIA 显卡！"
   # 设置显卡功率
   while IFS= read -r gpu_id; do
     # 跳过无效显卡

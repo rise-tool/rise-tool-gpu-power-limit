@@ -51,29 +51,6 @@ private_check_file_exists() {
 }
 
 #
-# 设置：内部函数 - 拷贝文件
-#
-private_copy_file() {
-  # 定义内部变量
-  local file_origin_path="${1:-}"
-  local file_target_path="${2:-}"
-  # 拷贝文件
-  copy "$file_origin_path" "$file_target_path"
-}
-
-#
-# 设置：内部函数 - 删除文件
-#
-private_delete_file() {
-  # 定义内部变量
-  local file_path = "${1:-}"
-  # 校验文件是否存在
-  private_check_file_exists "$file_path"
-  # 删除文件
-  rm -rf "$file_path"
-}
-
-#
 # 设置：外部函数 - 安装系统服务
 #
 public_install_service() {
