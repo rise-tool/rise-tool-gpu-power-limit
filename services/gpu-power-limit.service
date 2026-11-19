@@ -1,0 +1,20 @@
+#
+# NVIDIA GPU Power Limit Service
+#
+[Unit]
+Description=Set NVIDIA GPU power limit
+After=systemd-modules-load.service
+StartLimitIntervalSec=120
+StartLimitBurst=12
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/bin/gpu-power-limit.sh
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=20
+
+[Install]
+WantedBy=multi-user.target
