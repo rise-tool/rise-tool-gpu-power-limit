@@ -77,10 +77,18 @@ private_delete_file() {
 # 设置：外部函数 - 安装系统服务
 #
 public_install_service() {
+  # 定义内部变量
+  local program_source="${PROJECT_ROOTDIR_PATH}/bin/${SERVICE_NAME}.sh"
+  local service_source="${PROJECT_ROOTDIR_PATH}/services/${SERVICE_NAME}.service"
+  # 校验指定文件
+  private_check_file_exists "$program_source"
+  private_check_file_exists "$service_source"
   # 安装运行脚本
-  private_copy_file "${PROJECT_ROOTDIR_PATH}/bin/${SERVICE_NAME}.sh" "$PROGRAM_INSTALL_PATH"
+  install -D -o root -g root -m 0755 -- "$program_source" "${PROGRAM_INSTALL_PATH}/${SERVICE_NAME}.sh"
   # 安装系统服务
-  private_copy_file "${PROJECT_ROOTDIR_PATH}/services/${SERVICE_NAME}.service" "$SERVICE_INSTALL_PATH"
+  install -D -o root -g root -m 0644 -- "$service_source" "${SERVICE_INSTALL_PATH}/${SERVICE_NAME}.service"
+  # 更新系统服务
+  systemctl daemon-reload
 }
 
 #
@@ -99,10 +107,8 @@ public_start_service() {
 # 设置：外部函数 - 关闭系统服务
 #
 public_close_service() {
-  # 关闭系统服务
-  systemctl stop "${SERVICE_NAME}.service"
-  # 移除开机自启
-  systemctl disable "${SERVICE_NAME}.service"
+  # 关闭系统服务 + 移除开机自启
+  systemctl disable --now "${SERVICE_NAME}.service"
 }
 
 #
@@ -120,7 +126,9 @@ public_uninstall_service() {
   # 关闭系统服务
   public_close_service
   # 移除运行脚本
-  private_delete_file "${PROGRAM_INSTALL_PATH}/${SERVICE_NAME}.sh"
+  rm -f -- "${PROGRAM_INSTALL_PATH}/${SERVICE_NAME}.sh"
   # 移除系统服务
-  private_delete_file "${SERVICE_INSTALL_PATH}/${SERVICE_NAME}.service"
+  rm -f -- "${SERVICE_INSTALL_PATH}/${SERVICE_NAME}.service"
+  # 更新系统服务
+  systemctl daemon-reload
 }

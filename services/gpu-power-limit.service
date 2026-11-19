@@ -10,6 +10,7 @@ StartLimitBurst=12
 [Service]
 Type=oneshot
 User=root
+Environment="GPU_POWER_LIMIT=200"
 ExecStart=/usr/local/bin/gpu-power-limit.sh
 RemainAfterExit=yes
 Restart=on-failure
