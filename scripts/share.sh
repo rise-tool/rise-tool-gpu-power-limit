@@ -66,6 +66,7 @@ public_install_service() {
   # 安装运行脚本
   install -D -o root -g root -m 0755 -- "$program_source" "${PROGRAM_INSTALL_PATH}/${SERVICE_NAME}.sh"
   # 安装配置文件
+  install -D -o root -g root -m 0644 -- "$profile_source" "${PROFILE_INSTALL_PATH}/${SERVICE_NAME}.conf"
   # 安装系统服务
   install -D -o root -g root -m 0644 -- "$service_source" "${SERVICE_INSTALL_PATH}/${SERVICE_NAME}.service"
 }

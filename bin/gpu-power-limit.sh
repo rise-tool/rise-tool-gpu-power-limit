@@ -39,6 +39,16 @@ private_check_env() {
 }
 
 #
+# 设置内部函数 - 校验命令
+#
+private_check_command() {
+  # 定义内部变量
+  local command="${1:-}"
+  # 校验命令
+  command -v "$command" >/dev/null 2>&1 || private_throw_error "找不到 $command 命令！"
+}
+
+#
 # 设置内部函数：启动应用服务
 #
 private_start_app() {
@@ -48,6 +58,8 @@ private_start_app() {
   local gpu_power_limit="${GPU_POWER_LIMIT:-}"
   # 校验环境变量
   private_check_env "GPU_POWER_LIMIT" "$gpu_power_limit"
+  # 校验命令
+  private_check_command "nvidia-smi"
   # 查询显卡数量
   gpu_ids="$(nvidia-smi --query-gpu=uuid --format=csv,noheader)" || private_throw_error "查询 NVIDIA 显卡失败！"
   # 判断显卡数量
