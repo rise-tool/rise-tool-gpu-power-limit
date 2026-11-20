@@ -52,24 +52,46 @@ private_check_command() {
 # 设置内部函数：启动应用服务
 #
 private_start_app() {
-  # 定义内部变量
-  local gpu_ids
-  local gpu_id
+  local gpu_ids gpu_id gpu_max_power gpu_target_power
   local gpu_power_limit="${GPU_POWER_LIMIT:-}"
-  # 校验环境变量
+
+  # 校验百分比
   private_check_env "GPU_POWER_LIMIT" "$gpu_power_limit"
-  # 校验命令
+
+  [[ "$gpu_power_limit" =~ ^([1-9][0-9]?|100)$ ]] ||
+    private_throw_error "GPU_POWER_LIMIT 必须是 1～100 的整数百分比！"
+
   private_check_command "nvidia-smi"
-  # 查询显卡数量
-  gpu_ids="$(nvidia-smi --query-gpu=uuid --format=csv,noheader)" || private_throw_error "查询 NVIDIA 显卡失败！"
-  # 判断显卡数量
-  [[ -n "$gpu_ids" ]] || private_throw_error "没有检测到 NVIDIA 显卡！"
-  # 逐张设置功率
+  private_check_command "awk"
+
+  # 查询显卡
+  gpu_ids="$(nvidia-smi --query-gpu=uuid --format=csv,noheader)" ||
+    private_throw_error "查询 NVIDIA 显卡失败！"
+
+  [[ -n "$gpu_ids" ]] ||
+    private_throw_error "没有检测到 NVIDIA 显卡！"
+
   while IFS= read -r gpu_id; do
-    # 跳过无效显卡
     [[ -n "$gpu_id" ]] || continue
-    # 设置显卡功率
-    nvidia-smi -i "$gpu_id" -pl "$gpu_power_limit" || private_throw_error "设置 $gpu_id 显卡功率失败！"
+
+    # 查询当前显卡允许的最大功率（W）
+    gpu_max_power="$(nvidia-smi -i "$gpu_id" \
+      --query-gpu=power.max_limit --format=csv,noheader,nounits)" ||
+      private_throw_error "查询 $gpu_id 最大功率失败！"
+
+    # 校验查询结果并计算目标功率，支持最大功率含小数
+    gpu_target_power="$(LC_ALL=C awk -v percent="$gpu_power_limit" '
+      $1 ~ /^[0-9]+([.][0-9]+)?$/ && $1 > 0 {
+        printf "%.2f\n", $1 * percent / 100
+        next
+      }
+      { exit 1 }
+    ' <<< "$gpu_max_power")" ||
+      private_throw_error "无法读取 $gpu_id 的有效最大功率！"
+
+    # 应用功率上限
+    nvidia-smi -i "$gpu_id" -pl "$gpu_target_power" ||
+      private_throw_error "设置 $gpu_id 显卡功率失败，请检查是否低于最小功率！"
   done <<< "$gpu_ids"
 }
 
